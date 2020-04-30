@@ -154,6 +154,9 @@ with open('testoutput.txt', 'w') as outfile:
         outfile.write('\n')
 
 
+#Use a different way to calculate the similarity between an article and the topic (instead of dot product) 
+
+
             
 
 
