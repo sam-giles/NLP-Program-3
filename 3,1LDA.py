@@ -57,10 +57,9 @@ def generateTopicDocVector(metadata):
                 topic_doc_vector[topic] = [name]
     return topic_doc_vector
 
-files = readInDocuments('../_corpus/')
 metadata = readMeta()
 topic_doc_vector = generateTopicDocVector(metadata)
-print(metadata['SocialChange_18'])
+files = readInDocuments('../_corpus/')
 files = preprocessData(files)
 dictionary = Dictionary(files)
 corpus = [dictionary.doc2bow(doc) for doc in files]
@@ -81,5 +80,5 @@ for text in files:
     for mesh_label in metadata[text]:
         for j in topic_doc_vector:
             #do something here
-            
+
 
