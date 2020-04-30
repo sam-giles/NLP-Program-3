@@ -63,22 +63,35 @@ def readMeta():
 #                 label_topic_vector[label] = [name]
 #     return label_topic_vector
 
-def generateTopicLabelMatrix(model, metadata, data, dictionary):
-# For each article A
-#   For each MeSH label associated with A
-#       For each dimension j of the topic-document vector v[A]
-#           Topic-label-M[label][j] += v[A][j]
+def generateTopicLabelMatrix(model, metadata, data, dictionary, num_topics):
+
     topic_label_matrix = {}
+    # For each article A
     for text in data:
+        # For each MeSH label associated with A
         for mesh_label in metadata[text[0]]:
             corp = [dictionary.doc2bow(text[1])]
             topic_doc_vector = model[corp]
+            # For each dimension j of the topic-document vector v[A]
             for j in topic_doc_vector:
-                print(j)
+                #fill in topic as 0.0 if model didn't produce it
+                for i in range(0, num_topics):
+                    if i not in [tup[0] for tup in j]:
+                        j.append((i, 0.0))
                 if mesh_label in topic_label_matrix.keys():
-                    topic_label_matrix[mesh_label].append(j)
+                    #Topic-label-M[label][j] += v[A][j]
+                    for a in range(len(j)):
+                        for b in range(len(topic_label_matrix[mesh_label])):
+                            if j[a][0] == topic_label_matrix[mesh_label][b][0]:
+                                #convert to list because tuples are immutable
+                                topic_label_matrix[mesh_label][b] = list(topic_label_matrix[mesh_label][b])
+                                #add the value
+                                topic_label_matrix[mesh_label][b][1] += j[a][1]
+                                #convert back to tuple
+                                topic_label_matrix[mesh_label][b] = tuple(topic_label_matrix[mesh_label][b])
                 else:
-                    topic_label_matrix[mesh_label] = [j]
+                    topic_label_matrix[mesh_label] = j.copy()
+                    
     return topic_label_matrix
 
 ######
@@ -103,7 +116,8 @@ temp = training_dictionary[0]
 id2word = training_dictionary.id2token
 
 #create model with training data
-model = LdaModel(corpus=corpus, id2word=id2word, num_topics=10)
+num_topics = 8
+model = LdaModel(corpus=corpus, id2word=id2word, num_topics=num_topics)
 
 #use other half for testing
 testing = files[1000:]
@@ -111,23 +125,26 @@ testingText = [text[1] for text in testing]
 test_dictionary = Dictionary(testingText)
 test_corpus = [test_dictionary.doc2bow(text) for text in testingText]
 
-topic_label_matrix = generateTopicLabelMatrix(model, metadata, training, dictionary)
+topic_label_matrix = generateTopicLabelMatrix(model, metadata, training, dictionary, num_topics)
+print(topic_label_matrix['InfectionControl'])
+print(len(topic_label_matrix['InfectionControl']))
 
-for i in range(len(test_corpus)):
-    m = model[test_corpus[i]]
-    doc_name = testing[i][0]
-    labels = metadata[doc_name]
-    print(doc_name)
-    print(m)
-    print(labels)
-    # for label in labels:
-    #     m = np.array(m)
-    #     print(label)
-    #     print(np.dot(np.array(topic_label_matrix[label]), m))
-    print()
-    print()
-    print()
-    print()
+
+# for i in range(len(test_corpus)):
+#     m = model[test_corpus[i]]
+#     doc_name = testing[i][0]
+#     labels = metadata[doc_name]
+#     print(doc_name)
+#     print(m)
+#     print(labels)
+#     for label in labels:
+#         m = np.array(m)
+#         print(label)
+#         print(np.dot(np.array(topic_label_matrix[label]), m))
+#     print()
+#     print()
+#     print()
+#     print()
 
 
             
