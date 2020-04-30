@@ -91,7 +91,7 @@ def generateTopicLabelMatrix(model, metadata, data, dictionary, num_topics):
                                 topic_label_matrix[mesh_label][b] = tuple(topic_label_matrix[mesh_label][b])
                 else:
                     topic_label_matrix[mesh_label] = j.copy()
-                    
+
     return topic_label_matrix
 
 ######
@@ -126,25 +126,32 @@ test_dictionary = Dictionary(testingText)
 test_corpus = [test_dictionary.doc2bow(text) for text in testingText]
 
 topic_label_matrix = generateTopicLabelMatrix(model, metadata, training, dictionary, num_topics)
-print(topic_label_matrix['InfectionControl'])
-print(len(topic_label_matrix['InfectionControl']))
 
-
-# for i in range(len(test_corpus)):
-#     m = model[test_corpus[i]]
-#     doc_name = testing[i][0]
-#     labels = metadata[doc_name]
-#     print(doc_name)
-#     print(m)
-#     print(labels)
-#     for label in labels:
-#         m = np.array(m)
-#         print(label)
-#         print(np.dot(np.array(topic_label_matrix[label]), m))
-#     print()
-#     print()
-#     print()
-#     print()
+with open('testoutput.txt', 'w') as outfile:
+    for i in range(len(test_corpus)):
+        m = model[test_corpus[i]]
+        doc_name = testing[i][0]
+        #fill in topic as 0.0 if model didn't produce it
+        for i in range(0, num_topics):
+            if i not in [tup[0] for tup in m]:
+                m.append((i, 0.0))
+        #sort and convert the topic document matrix
+        m = sorted(m, key = lambda x: x[0])
+        m = [tup[1] for tup in m]
+        m = np.array(m)
+        outfile.write(doc_name + '\n')
+        for label in topic_label_matrix.keys():
+            #sort
+            t = sorted(topic_label_matrix[label], key = lambda x: x[0])
+            #convert to list without topics
+            t = [tup[1] for tup in t]
+            #convert to numpy array
+            t = np.array(t)
+            outfile.write(str(label) + ' ' + str(np.dot(m, t)) + '\n')
+        outfile.write('\n')
+        outfile.write('\n')
+        outfile.write('\n')
+        outfile.write('\n')
 
 
             
