@@ -7,10 +7,19 @@ import csv
 import string
 import numpy as np
 
+from numpy.linalg import norm
+import matplotlib.pyplot as plt; plt.rcdefaults()
+
+import matplotlib.pyplot as plt
+
+
+
 def readInDocuments(directory):
     texts = []
+    print(len(os.listdir(directory)))
     for filename in os.listdir(directory):
-        open_file = open(directory + filename, 'r')
+        
+        open_file = open(directory + filename, 'r',encoding="utf8")
         contents = open_file.readlines()
         tempList = [filename]
         contentList = []
@@ -127,7 +136,47 @@ test_corpus = [test_dictionary.doc2bow(text) for text in testingText]
 
 topic_label_matrix = generateTopicLabelMatrix(model, metadata, training, dictionary, num_topics)
 
+combinedList=[]
+
 with open('testoutput.txt', 'w') as outfile:
+    for i in range(len(test_corpus)):
+        m = model[test_corpus[i]]
+        doc_name = testing[i][0]
+        #fill in topic as 0.0 if model didn't produce it
+        for i in range(0, num_topics):
+            if i not in [tup[0] for tup in m]:
+                m.append((i, 0.0))
+        #sort and convert the topic document matrix
+        m = sorted(m, key = lambda x: x[0])
+        m = [tup[1] for tup in m]
+        m = np.array(m)
+        outfile.write(doc_name + '\n')
+        labelList=[]
+        dotList=[]
+        cossineList=[]
+        for label in topic_label_matrix.keys():
+            #sort
+            t = sorted(topic_label_matrix[label], key = lambda x: x[0])
+            #convert to list without topics
+            t = [tup[1] for tup in t]
+            #convert to numpy array
+            t = np.array(t)
+            outfile.write(str(label) + ' ' + str(np.dot(m, t)) + '\n')
+            cos_sim = np.dot(m, t)/(norm(m)*norm(t))
+
+            # combinedList.append([doc_name,str(label),np.dot(m, t),cos_sim])
+            labelList.append(str(label))
+            dotList.append(np.dot(m, t))
+            cossineList.append(cos_sim)
+        combinedList.append([doc_name,labelList,dotList,cossineList])
+        outfile.write('\n')
+        outfile.write('\n')
+        outfile.write('\n')
+        outfile.write('\n')
+
+#Use a different way to calculate the similarity between an article and the topic (instead of dot product) 
+
+with open('testoutputNOTDOT.txt', 'w') as outfile:
     for i in range(len(test_corpus)):
         m = model[test_corpus[i]]
         doc_name = testing[i][0]
@@ -147,16 +196,28 @@ with open('testoutput.txt', 'w') as outfile:
             t = [tup[1] for tup in t]
             #convert to numpy array
             t = np.array(t)
-            outfile.write(str(label) + ' ' + str(np.dot(m, t)) + '\n')
-        outfile.write('\n')
-        outfile.write('\n')
-        outfile.write('\n')
-        outfile.write('\n')
 
-
-#Use a different way to calculate the similarity between an article and the topic (instead of dot product) 
-
-
+            cos_sim = np.dot(m, t)/(norm(m)*norm(t))
+            outfile.write(str(label) + ' ' + str(cos_sim) + '\n')
             
+        outfile.write('\n')
+        outfile.write('\n')
+        outfile.write('\n')
+        outfile.write('\n')
+            
+# for x in combinedList:
+#     print(x)
+
+helper=combinedList[0]
+
+y_pos = np.arange(len(helper[1]))
+
+plt.barh(tuple(labelList), dotList, align='center', alpha=0.5)
+plt.yticks(y_pos, helper[1])
+# plt.xlabel('Usage')
+plt.title(helper[0])
 
 
+
+plt.tight_layout()
+plt.show()
